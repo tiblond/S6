@@ -11,13 +11,19 @@
 #include <unordered_map>
 #include <string>
 #include <cstring>
+
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-const int       NUM_THREADS = 1;    // Default value, changed by argv. 
+const int       NUM_THREADS = 4;    // Default value, changed by argv. 
+
+std::mutex          mutex_;
+std::condition_variable data_cond;
 
 using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
@@ -58,6 +64,7 @@ public:
     /// \param len  size of the data array.
     void callback(void* data, size_t len)
     {
+    
         char* data_raw = static_cast<char *>(data);
         png_data_ = PNGDataPtr(new PNGDataVec(&data_raw[0], &data_raw[len]));
     }
@@ -157,6 +164,10 @@ public:
                           width,
                           height,
                           stride); 
+    // The cache hash map (TODO). Note that we use the string definition as the // key.
+    using PNGHashMap = std::unordered_map<std::string, PNGDataPtr>;
+    PNGHashMap png_cache_;
+
 
             // Compress it ...
             PNGWriter writer;
@@ -208,6 +219,7 @@ private:
     // The tasks to run queue (FIFO).
     std::queue<TaskDef> task_queue_;
 
+
     // The cache hash map (TODO). Note that we use the string definition as the // key.
     using PNGHashMap = std::unordered_map<std::string, PNGDataPtr>;
     PNGHashMap png_cache_;
@@ -249,6 +261,7 @@ public:
         for (auto& qthread: queue_threads_) {
             qthread.join();
         }
+        
     }
 
     /// \brief Parse a task definition string and fills the references TaskDef
@@ -311,8 +324,11 @@ public:
         TaskDef def;
         if (parse(line_org, def)) {
             std::cerr << "Queueing task '" << line_org << "'." << std::endl;
+            std::lock_guard<std::mutex> lock(mutex_);
             task_queue_.push(def);
+            data_cond.notify_one();
         }
+
     }
 
     /// \brief Returns if the internal queue is empty (true) or not.
@@ -326,12 +342,14 @@ private:
     void processQueue()
     {
         while (should_run_) {
-            if (!task_queue_.empty()) {
-                TaskDef task_def = task_queue_.front();
-                task_queue_.pop();
-                TaskRunner runner(task_def);
-                runner();
-            }
+            std::unique_lock<std::mutex> lock(mutex_);
+            data_cond.wait(lock,[&] {return !task_queue_.empty();});
+            TaskDef task_def = task_queue_.front();
+            task_queue_.pop();
+            lock.unlock();
+            TaskRunner runner(task_def);
+            runner();
+            
         }
     }
 };
