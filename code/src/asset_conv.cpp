@@ -26,6 +26,7 @@ using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
 
 std::mutex mut;
+std::mutex mut2;
 std::condition_variable data_cond;
 
 
@@ -146,6 +147,7 @@ public:
 
         try {
             // Read the file ...
+            std::lock_guard<std::mutex> lock(mut2);
             image_in = nsvgParseFromFile(fname_in.c_str(), "px", 0);
             if (image_in == nullptr) {
                 std::string msg = "Cannot parse '" + fname_in + "'.";
@@ -253,8 +255,11 @@ public:
     ~Processor()
     {
         should_run_ = false;
+        int i =0;
         for (auto& qthread: queue_threads_) {
+            data_cond.notify_all();
             qthread.join();
+            std::cerr << "Thread " << i++ << " joined." << std::endl;
         }
         
     }
@@ -337,14 +342,16 @@ private:
     {
         while (should_run_) {
             std::unique_lock<std::mutex> lock(mut);
-            data_cond.wait(lock, [this]{return !task_queue_.empty();});
+            data_cond.wait(lock, [this]{return !task_queue_.empty() || !should_run_;});
+            if (!should_run_) {
+                return;
+            }
             TaskDef task_def = task_queue_.front();
             task_queue_.pop();
             lock.unlock();
             TaskRunner runner(task_def);
             runner();
         }
-        //std::terminate();
     }
 };
 
@@ -354,29 +361,35 @@ int main(int argc, char** argv)
 {
     using namespace gif643;
 
-    std::ifstream file_in;
-
-    /* for (size_t i = 0; i < argc; i++)
-    {
-        if (strcmp(argv[i], "-t") !=0)
-        {
-            NUM_THREADS = atoi(argv[i+1]);
+    std::ifstream file_in; 
+    std::cout << "Have " << argc << " arguments:" << std::endl;
+    for (int i = 0; i < argc; ++i) {
+        std::cout << argv[i] << std::endl;
+    }
+    if (argc >= 2 ) {
+        for (size_t i = 1; i < argc; i++){ 
+            
+            if (strcmp(argv[i], "-f"))
+            { 
+                file_in.open(argv[i]);
+                if (file_in.is_open()) {
+                    std::cin.rdbuf(file_in.rdbuf());
+                    std::cerr << "Using " << argv[i] << "..." << std::endl;
+                } else {
+                    std::cerr   << "Error: Cannot open '"
+                                << argv[i] 
+                                << "', using stdin (press CTRL-D for EOF)." 
+                                << std::endl;
+                };
+            }
+            if (strcmp(argv[i], "-t"))
+            {
+                NUM_THREADS = atoi(argv[i-1]);
+                std::cerr << "Using " << NUM_THREADS << " threads..." << std::endl;
+            }
         }
         
-    } */
-    
-
-    if (argc >= 2 && (strcmp(argv[1], "-") != 0)) {
-        file_in.open(argv[1]);
-        if (file_in.is_open()) {
-            std::cin.rdbuf(file_in.rdbuf());
-            std::cerr << "Using " << argv[1] << "..." << std::endl;
-        } else {
-            std::cerr   << "Error: Cannot open '"
-                        << argv[1] 
-                        << "', using stdin (press CTRL-D for EOF)." 
-                        << std::endl;
-        }
+        
     } else {
         std::cerr << "Using stdin (press CTRL-D for EOF)." << std::endl;
     }
