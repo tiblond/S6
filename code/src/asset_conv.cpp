@@ -11,6 +11,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <unordered_map>
+#include <atomic>
 #include <string>
 #include <cstring>
 #include <thread>
@@ -19,7 +20,7 @@ namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-const int       NUM_THREADS = 24;    // Default value, changed by argv. 
+int             NUM_THREADS = 48;    // Default value, changed by argv. 
 
 using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
@@ -255,6 +256,7 @@ public:
         for (auto& qthread: queue_threads_) {
             qthread.join();
         }
+        
     }
 
     /// \brief Parse a task definition string and fills the references TaskDef
@@ -338,10 +340,11 @@ private:
             data_cond.wait(lock, [this]{return !task_queue_.empty();});
             TaskDef task_def = task_queue_.front();
             task_queue_.pop();
+            lock.unlock();
             TaskRunner runner(task_def);
             runner();
         }
-        std::terminate();
+        //std::terminate();
     }
 };
 
@@ -352,6 +355,16 @@ int main(int argc, char** argv)
     using namespace gif643;
 
     std::ifstream file_in;
+
+    /* for (size_t i = 0; i < argc; i++)
+    {
+        if (strcmp(argv[i], "-t") !=0)
+        {
+            NUM_THREADS = atoi(argv[i+1]);
+        }
+        
+    } */
+    
 
     if (argc >= 2 && (strcmp(argv[1], "-") != 0)) {
         file_in.open(argv[1]);
