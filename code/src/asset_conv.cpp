@@ -20,7 +20,7 @@ namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-const int       NUM_THREADS = 4;    // Default value, changed by argv. 
+const int       NUM_THREADS = 48;    // Default value, changed by argv. 
 
 std::mutex          mutex_;
 std::condition_variable data_cond;
@@ -114,11 +114,12 @@ struct TaskDef
 /// \brief A class representing the processing of one SVG file to a PNG stream.
 ///
 /// Not thread safe !
-///
+///#andre est ce qu,on fait juste mettre un mutex pour etre safe?
 class TaskRunner
 {
 private:
     TaskDef task_def_;
+    std::mutex          mutexTR_;
 
 public:
     TaskRunner(const TaskDef& task_def):
@@ -143,8 +144,9 @@ public:
 
         NSVGimage*          image_in        = nullptr;
         NSVGrasterizer*     rast            = nullptr;
-
+        
         try {
+            std::lock_guard<std::mutex> lock(mutexTR_);
             // Read the file ...
             image_in = nsvgParseFromFile(fname_in.c_str(), "px", 0);
             if (image_in == nullptr) {
@@ -259,6 +261,7 @@ public:
     {
         should_run_ = false;
         for (auto& qthread: queue_threads_) {
+            data_cond.notify_one();
             qthread.join();
         }
         
@@ -343,13 +346,15 @@ private:
     {
         while (should_run_) {
             std::unique_lock<std::mutex> lock(mutex_);
-            data_cond.wait(lock,[&] {return !task_queue_.empty();});
-            TaskDef task_def = task_queue_.front();
-            task_queue_.pop();
-            lock.unlock();
-            TaskRunner runner(task_def);
-            runner();
-            
+            data_cond.wait(lock,[&] {return !task_queue_.empty() || !should_run_;});
+            if (should_run_)
+                {
+                    TaskDef task_def = task_queue_.front();
+                    task_queue_.pop();
+                    lock.unlock();
+                    TaskRunner runner(task_def);
+                    runner(); 
+                }
         }
     }
 };
