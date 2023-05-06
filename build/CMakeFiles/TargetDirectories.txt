@@ -1,0 +1,9 @@
+/home/simon/Documents/repos/S6/build/CMakeFiles/nanosvg.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/stb_image.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/asset_conv.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/lab_ex1.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/lab_ex2.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/lab_ex3.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/lab_ex4.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/edit_cache.dir
+/home/simon/Documents/repos/S6/build/CMakeFiles/rebuild_cache.dir

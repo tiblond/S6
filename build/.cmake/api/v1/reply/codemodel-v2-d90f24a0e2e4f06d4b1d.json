@@ -1,0 +1,114 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "AssetConv",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "asset_conv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-asset_conv-Debug-e0c1fc71394abe1e5717.json",
+					"name" : "asset_conv",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "lab_ex1::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-lab_ex1-Debug-063f563ee4db92f3b436.json",
+					"name" : "lab_ex1",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "lab_ex2::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-lab_ex2-Debug-ca987cd7b2db784ade35.json",
+					"name" : "lab_ex2",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "lab_ex3::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-lab_ex3-Debug-325bf14ed974777f5d20.json",
+					"name" : "lab_ex3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "lab_ex4::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-lab_ex4-Debug-3822e06caf3edc7ec5bf.json",
+					"name" : "lab_ex4",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "nanosvg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-nanosvg-Debug-db960a0b4960f7850aaa.json",
+					"name" : "nanosvg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "stb_image::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-stb_image-Debug-1668a7e4231c5c0aeb08.json",
+					"name" : "stb_image",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/simon/Documents/repos/S6/build",
+		"source" : "/home/simon/Documents/repos/S6/code"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 5
+	}
+}

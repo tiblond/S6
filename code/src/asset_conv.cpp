@@ -8,6 +8,8 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <mutex>
+#include <condition_variable>
 #include <unordered_map>
 #include <string>
 #include <cstring>
@@ -17,10 +19,14 @@ namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-const int       NUM_THREADS = 1;    // Default value, changed by argv. 
+const int       NUM_THREADS = 24;    // Default value, changed by argv. 
 
 using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
+
+std::mutex mut;
+std::condition_variable data_cond;
+
 
 /// \brief Wraps callbacks from stbi_image_write
 //
@@ -309,9 +315,11 @@ public:
     {
         std::queue<TaskDef> queue;
         TaskDef def;
+        std::lock_guard<std::mutex> lock(mut);
         if (parse(line_org, def)) {
             std::cerr << "Queueing task '" << line_org << "'." << std::endl;
             task_queue_.push(def);
+            data_cond.notify_one();
         }
     }
 
@@ -326,13 +334,14 @@ private:
     void processQueue()
     {
         while (should_run_) {
-            if (!task_queue_.empty()) {
-                TaskDef task_def = task_queue_.front();
-                task_queue_.pop();
-                TaskRunner runner(task_def);
-                runner();
-            }
+            std::unique_lock<std::mutex> lock(mut);
+            data_cond.wait(lock, [this]{return !task_queue_.empty();});
+            TaskDef task_def = task_queue_.front();
+            task_queue_.pop();
+            TaskRunner runner(task_def);
+            runner();
         }
+        std::terminate();
     }
 };
 
