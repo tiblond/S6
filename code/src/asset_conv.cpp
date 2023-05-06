@@ -20,7 +20,7 @@ namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-const int       NUM_THREADS = 48;    // Default value, changed by argv. 
+long       NUM_THREADS = 1;    // Default value, changed by argv. 
 
 std::mutex          mutex_;
 std::condition_variable data_cond;
@@ -251,6 +251,7 @@ public:
         }
 
         for (int i = 0; i < n_threads; ++i) {
+            //std::cerr << "Nombre de thread" << n_threads;
             queue_threads_.push_back(
                 std::thread(&Processor::processQueue, this)
             );
@@ -366,15 +367,18 @@ int main(int argc, char** argv)
     using namespace gif643;
 
     std::ifstream file_in;
-
-    if (argc >= 2 && (strcmp(argv[1], "-") != 0)) {
-        file_in.open(argv[1]);
+    char *p;
+    int num;
+    errno = 0;
+    NUM_THREADS = strtol(argv[1], &p, 10);
+    if (argc >= 2 && (strcmp(argv[2], "-") != 0)) {
+        file_in.open(argv[2]);
         if (file_in.is_open()) {
             std::cin.rdbuf(file_in.rdbuf());
-            std::cerr << "Using " << argv[1] << "..." << std::endl;
+            std::cerr << "Using " << argv[2] << "..." << std::endl;
         } else {
             std::cerr   << "Error: Cannot open '"
-                        << argv[1] 
+                        << argv[2] 
                         << "', using stdin (press CTRL-D for EOF)." 
                         << std::endl;
         }
