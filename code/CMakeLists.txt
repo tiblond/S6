@@ -26,3 +26,6 @@ target_link_libraries(lab_ex3 pthread)
 # Lab - executable pour partie Python
 add_executable(lab_ex4 src/lab_ex4.cpp)
 target_link_libraries(lab_ex4 pthread)
+
+add_executable(PythPyth src/PythPyth.cpp)
+target_link_libraries(PythPyth pthread)

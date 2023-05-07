@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -rdynamic CMakeFiles/PythPyth.dir/src/PythPyth.cpp.o -o PythPyth  -lpthread 

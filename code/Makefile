@@ -207,6 +207,43 @@ lab_ex4/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex4.dir/build.make CMakeFiles/lab_ex4.dir/build
 .PHONY : lab_ex4/fast
 
+#=============================================================================
+# Target rules for targets named PythPyth
+
+# Build rule for target.
+PythPyth: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 PythPyth
+.PHONY : PythPyth
+
+# fast build rule for target.
+PythPyth/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/build
+.PHONY : PythPyth/fast
+
+src/PythPyth.o: src/PythPyth.cpp.o
+.PHONY : src/PythPyth.o
+
+# target to build an object file
+src/PythPyth.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/src/PythPyth.cpp.o
+.PHONY : src/PythPyth.cpp.o
+
+src/PythPyth.i: src/PythPyth.cpp.i
+.PHONY : src/PythPyth.i
+
+# target to preprocess a source file
+src/PythPyth.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/src/PythPyth.cpp.i
+.PHONY : src/PythPyth.cpp.i
+
+src/PythPyth.s: src/PythPyth.cpp.s
+.PHONY : src/PythPyth.s
+
+# target to generate assembly for a file
+src/PythPyth.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/src/PythPyth.cpp.s
+.PHONY : src/PythPyth.cpp.s
+
 src/asset_conv.o: src/asset_conv.cpp.o
 .PHONY : src/asset_conv.o
 
@@ -383,6 +420,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... PythPyth"
 	@echo "... asset_conv"
 	@echo "... lab_ex1"
 	@echo "... lab_ex2"
@@ -390,6 +428,9 @@ help:
 	@echo "... lab_ex4"
 	@echo "... nanosvg"
 	@echo "... stb_image"
+	@echo "... src/PythPyth.o"
+	@echo "... src/PythPyth.i"
+	@echo "... src/PythPyth.s"
 	@echo "... src/asset_conv.o"
 	@echo "... src/asset_conv.i"
 	@echo "... src/asset_conv.s"

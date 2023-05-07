@@ -70,6 +70,7 @@ all: CMakeFiles/lab_ex1.dir/all
 all: CMakeFiles/lab_ex2.dir/all
 all: CMakeFiles/lab_ex3.dir/all
 all: CMakeFiles/lab_ex4.dir/all
+all: CMakeFiles/PythPyth.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -84,6 +85,7 @@ clean: CMakeFiles/lab_ex1.dir/clean
 clean: CMakeFiles/lab_ex2.dir/clean
 clean: CMakeFiles/lab_ex3.dir/clean
 clean: CMakeFiles/lab_ex4.dir/clean
+clean: CMakeFiles/PythPyth.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -93,7 +95,7 @@ clean: CMakeFiles/lab_ex4.dir/clean
 CMakeFiles/nanosvg.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/nanosvg.dir/build.make CMakeFiles/nanosvg.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/nanosvg.dir/build.make CMakeFiles/nanosvg.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=11,12 "Built target nanosvg"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=13,14 "Built target nanosvg"
 .PHONY : CMakeFiles/nanosvg.dir/all
 
 # Build rule for subdir invocation for target.
@@ -119,7 +121,7 @@ CMakeFiles/nanosvg.dir/clean:
 CMakeFiles/stb_image.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stb_image.dir/build.make CMakeFiles/stb_image.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stb_image.dir/build.make CMakeFiles/stb_image.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=13,14 "Built target stb_image"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=15,16 "Built target stb_image"
 .PHONY : CMakeFiles/stb_image.dir/all
 
 # Build rule for subdir invocation for target.
@@ -146,7 +148,7 @@ CMakeFiles/asset_conv.dir/all: CMakeFiles/nanosvg.dir/all
 CMakeFiles/asset_conv.dir/all: CMakeFiles/stb_image.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/asset_conv.dir/build.make CMakeFiles/asset_conv.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/asset_conv.dir/build.make CMakeFiles/asset_conv.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=1,2 "Built target asset_conv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=3,4 "Built target asset_conv"
 .PHONY : CMakeFiles/asset_conv.dir/all
 
 # Build rule for subdir invocation for target.
@@ -172,7 +174,7 @@ CMakeFiles/asset_conv.dir/clean:
 CMakeFiles/lab_ex1.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex1.dir/build.make CMakeFiles/lab_ex1.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex1.dir/build.make CMakeFiles/lab_ex1.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=3,4 "Built target lab_ex1"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=5,6 "Built target lab_ex1"
 .PHONY : CMakeFiles/lab_ex1.dir/all
 
 # Build rule for subdir invocation for target.
@@ -198,7 +200,7 @@ CMakeFiles/lab_ex1.dir/clean:
 CMakeFiles/lab_ex2.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex2.dir/build.make CMakeFiles/lab_ex2.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex2.dir/build.make CMakeFiles/lab_ex2.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=5,6 "Built target lab_ex2"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=7,8 "Built target lab_ex2"
 .PHONY : CMakeFiles/lab_ex2.dir/all
 
 # Build rule for subdir invocation for target.
@@ -224,7 +226,7 @@ CMakeFiles/lab_ex2.dir/clean:
 CMakeFiles/lab_ex3.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex3.dir/build.make CMakeFiles/lab_ex3.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex3.dir/build.make CMakeFiles/lab_ex3.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=7,8 "Built target lab_ex3"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=9,10 "Built target lab_ex3"
 .PHONY : CMakeFiles/lab_ex3.dir/all
 
 # Build rule for subdir invocation for target.
@@ -250,7 +252,7 @@ CMakeFiles/lab_ex3.dir/clean:
 CMakeFiles/lab_ex4.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex4.dir/build.make CMakeFiles/lab_ex4.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex4.dir/build.make CMakeFiles/lab_ex4.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=9,10 "Built target lab_ex4"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=11,12 "Built target lab_ex4"
 .PHONY : CMakeFiles/lab_ex4.dir/all
 
 # Build rule for subdir invocation for target.
@@ -268,6 +270,32 @@ lab_ex4: CMakeFiles/lab_ex4.dir/rule
 CMakeFiles/lab_ex4.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/lab_ex4.dir/build.make CMakeFiles/lab_ex4.dir/clean
 .PHONY : CMakeFiles/lab_ex4.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/PythPyth.dir
+
+# All Build rule for target.
+CMakeFiles/PythPyth.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/Documents/repos/S6/code/CMakeFiles --progress-num=1,2 "Built target PythPyth"
+.PHONY : CMakeFiles/PythPyth.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/PythPyth.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/simon/Documents/repos/S6/code/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/PythPyth.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/simon/Documents/repos/S6/code/CMakeFiles 0
+.PHONY : CMakeFiles/PythPyth.dir/rule
+
+# Convenience name for target.
+PythPyth: CMakeFiles/PythPyth.dir/rule
+.PHONY : PythPyth
+
+# clean rule for target.
+CMakeFiles/PythPyth.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PythPyth.dir/build.make CMakeFiles/PythPyth.dir/clean
+.PHONY : CMakeFiles/PythPyth.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

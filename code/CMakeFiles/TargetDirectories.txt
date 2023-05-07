@@ -5,5 +5,6 @@
 /home/simon/Documents/repos/S6/code/CMakeFiles/lab_ex2.dir
 /home/simon/Documents/repos/S6/code/CMakeFiles/lab_ex3.dir
 /home/simon/Documents/repos/S6/code/CMakeFiles/lab_ex4.dir
+/home/simon/Documents/repos/S6/code/CMakeFiles/PythPyth.dir
 /home/simon/Documents/repos/S6/code/CMakeFiles/edit_cache.dir
 /home/simon/Documents/repos/S6/code/CMakeFiles/rebuild_cache.dir
