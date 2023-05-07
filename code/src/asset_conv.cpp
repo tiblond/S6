@@ -105,12 +105,24 @@ public:
 ///
 /// NOTE: Assumes the input SVG is ORG_WIDTH wide (48px) and the result will be
 /// square. Does not matter if it does not fit in the resulting image, it will //// simply be cropped.
+
+
+/* struct TaskDef
+{
+    std::atomic<std::string> fname_in;
+    std::atomic<std::string> fname_out; 
+    std::atomic<int> size;
+};
+  */
+
+
 struct TaskDef
 {
     std::string fname_in;
     std::string fname_out; 
     int size;
-};
+}; 
+
 
 /// \brief A class representing the processing of one SVG file to a PNG stream.
 ///
@@ -125,6 +137,7 @@ public:
     TaskRunner(const TaskDef& task_def):
         task_def_(task_def)
     {
+        task_def_= task_def;
     }
 
     void operator()()
@@ -362,29 +375,25 @@ int main(int argc, char** argv)
     using namespace gif643;
 
     std::ifstream file_in; 
-    std::cout << "Have " << argc << " arguments:" << std::endl;
-    for (int i = 0; i < argc; ++i) {
-        std::cout << argv[i] << std::endl;
-    }
+    
     if (argc >= 2 ) {
         for (size_t i = 1; i < argc; i++){ 
-            
-            if (strcmp(argv[i], "-f"))
+            if (!strcmp(argv[i], "-f"))
             { 
-                file_in.open(argv[i]);
+                file_in.open(argv[i+1]);
                 if (file_in.is_open()) {
                     std::cin.rdbuf(file_in.rdbuf());
-                    std::cerr << "Using " << argv[i] << "..." << std::endl;
+                    std::cerr << "Using " << argv[i+1] << "..." << std::endl;
                 } else {
                     std::cerr   << "Error: Cannot open '"
-                                << argv[i] 
+                                << argv[i+1] 
                                 << "', using stdin (press CTRL-D for EOF)." 
                                 << std::endl;
                 };
             }
-            if (strcmp(argv[i], "-t"))
+            if (!strcmp(argv[i], "-t"))
             {
-                NUM_THREADS = atoi(argv[i-1]);
+                NUM_THREADS = atoi(argv[i+1]);
                 std::cerr << "Using " << NUM_THREADS << " threads..." << std::endl;
             }
         }
