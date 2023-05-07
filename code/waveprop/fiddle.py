@@ -1,10 +1,35 @@
 
 #  Copyright (C) 2009,2011,2020. Max Hofheinz
-
+# Modifie par BERA1107 & LERS0601
 import tkinter
-
+from subprocess import Popen, PIPE
+import mmap
+import time
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+
+def subp():
+    subproc = Popen(["./JasonSegel", FNAME], stdin=PIPE, stdout=PIPE)
+    return subproc
+
+
+def signal_and_wait(subproc):
+    subproc.stdin.write("START\n".encode())
+    subproc.stdin.flush()
+    # Nécessaire pour vider le tampon de sortie
+    res = subproc.stdout.readline()
+    
+FNAME       = "GIF642-problemaique-sharedMemory"
+# Lancement de l'exécutable associé
+# NOTE: suppose que l'exécutable est dans le même dossier que celui en cours (normalement build/)
+subproc = subp()
+
+# Envoi d'une ligne sur l'entrée du sous-processus et attend un retour pour signaler que
+# nous sommes prêts à passer à la prochaine étape. 
+signal_and_wait(subproc)
+
+shm_f = open(FNAME, "r+b")
+
 
 class Param(tkinter.Frame):
     def __init__(self, parent, callback, param_index, param_name):
