@@ -15,27 +15,35 @@
 #include <sys/mman.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
+
+typedef struct {             // Structure declaration
+  double x_value = 0;         // First Array
+  double y_value = 0;         // Second Array
+  double z_value = 0;         // Third Array
+} e_vector;       // Structure variable 
+
+static const int MATRIX_SIZE = 100;
+typedef std::vector<std::vector<std::vector<e_vector>>> fourD; // 4th dimension 
+fourD E_object(MATRIX_SIZE,std::vector<std::vector<e_vector>>(MATRIX_SIZE,std::vector<e_vector>(MATRIX_SIZE))); 
 
 // Taille de la matrice de travail (un côté)
-static const int MATRIX_SIZE = 4;
-static const int BUFFER_SIZE = MATRIX_SIZE * MATRIX_SIZE * sizeof(double);
+
+static const int BUFFER_SIZE = MATRIX_SIZE * MATRIX_SIZE * MATRIX_SIZE * sizeof(e_vector);
 // Tampon générique à utiliser pour créer le fichier
 char buffer_[BUFFER_SIZE];
 
-int main(int argc, char** argv)
-    {
-        wait_signal();
-        // Do some math
-        std::cerr << "La tache";
-        ack_signal();
-    }
+
 
 void wait_signal()
 {
     // Attend une entrée (ligne complète avec \n) sur stdin.
     std::string msg;
     std::cin >> msg;
-    std::cerr << "CPP:I got you big boy PY" << std::endl;
+    std::cerr << "CPP:I got you big boy PY " << std::endl;
 }
 void ack_signal()
 {
@@ -43,143 +51,107 @@ void ack_signal()
     std::cout << "CPP: *Avec la voix du dude dans heartStone* : Travail termine" << std::endl;
 }
 
-// Fonction pour le curl_E
-std::vector<std::vector<std::vector<std::vector<double>>>> curl_E(std::vector<std::vector<std::vector<std::vector<double>>>> E) {
-    int n1 = E.size();
-    int n2 = E[0].size();
-    int n3 = E[0][0].size();
-    int n4 = E[0][0][0].size();
 
-    std::vector<std::vector<std::vector<std::vector<double>>>> curl_E(n1, std::vector<std::vector<std::vector<double>>>(n2, std::vector<std::vector<double>>(n3, std::vector<double>(n4, 0.0))));
 
-    for (int i = 0; i < n1; i++) {
-        for (int j = 0; j < n2 - 1; j++) {
-            for (int k = 0; k < n3; k++) {
-                curl_E[i][j][k][0] += E[i][j + 1][k][2] - E[i][j][k][2];
+fourD math_conc(fourD E_param)
+{   
+    fourD curl_E(MATRIX_SIZE,std::vector<std::vector<e_vector>>(MATRIX_SIZE,std::vector<e_vector>(MATRIX_SIZE)));
+    //Second Line Python
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE - 1; j++) {
+            for (int k = 0; k < MATRIX_SIZE; k++) {
+                curl_E[i][j][k].x_value += E_param[i][j+1][k].z_value - E_param[i][j][k].z_value;
+                
             }
         }
     }
-
-    for (int i = 0; i < n1; i++) {
-        for (int j = 0; j < n2; j++) {
-            for (int k = 0; k < n3 - 1; k++) {
-                curl_E[i][j][k][0] -= E[i][j][k + 1][1] - E[i][j][k][1];
+    //Third Line Python
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            for (int k = 0; k < MATRIX_SIZE - 1; k++) {
+                curl_E[i][j][k].x_value -= E_param[i][j][k+1].y_value - E_param[i][j][k].y_value;
             }
         }
     }
-
-    for (int i = 0; i < n1; i++) {
-        for (int j = 0; j < n2; j++) {
-            for (int k = 0; k < n3 - 1; k++) {
-                curl_E[i][j][k][1] += E[i][j][k + 1][0] - E[i][j][k][0];
+    //Fourth Line Python
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            for (int k = 0; k < MATRIX_SIZE - 1; k++) {
+                curl_E[i][j][k].y_value += E_param[i][j][k+1].x_value - E_param[i][j][k].x_value;
             }
         }
     }
-
-    for (int i = 0; i < n1 - 1; i++) {
-        for (int j = 0; j < n2; j++) {
-            for (int k = 0; k < n3; k++) {
-                curl_E[i][j][k][1] -= E[i + 1][j][k][2] - E[i][j][k][2];
+    //Fifth Line Python
+    for (int i = 0; i < MATRIX_SIZE - 1; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            for (int k = 0; k < MATRIX_SIZE; k++) {
+                curl_E[i][j][k].y_value -= E_param[i+1][j][k].z_value - E_param[i][j][k].z_value;
             }
         }
     }
-
-    for (int i = 0; i < n1 - 1; i++) {
-        for (int j = 0; j < n2; j++) {
-            for (int k = 0; k < n3; k++) {
-                curl_E[i][j][k][2] += E[i + 1][j][k][1] - E[i][j][k][1];
+    //Sixth Line Python
+    for (int i = 0; i < MATRIX_SIZE - 1; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            for (int k = 0; k < MATRIX_SIZE; k++) {
+                curl_E[i][j][k].z_value += E_param[i+1][j][k].y_value - E_param[i][j][k].y_value;
             }
         }
     }
-
-    for (int i = 0; i < n1; i++) {
-        for (int j = 0; j < n2 - 1; j++) {
-            for (int k = 0; k < n3; k++) {
-                curl_E[i][j][k][2] -= E[i][j + 1][k][0] - E[i][j][k][0];
+    //SeventhLine Python
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE - 1; j++) {
+            for (int k = 0; k < MATRIX_SIZE; k++) {
+                curl_E[i][j][k].z_value -= E_param[i][j+1][k].x_value - E_param[i][j][k].x_value;
             }
         }
     }
-
-    return curl_E;
+   return curl_E; 
 }
+int main(int argc, char** argv)
+    {
+        wait_signal();
+        memset(buffer_, 0, BUFFER_SIZE);
+        FILE* shm_f = fopen("GIF642-problematique-sharedMemory", "w");
+        fwrite(buffer_, sizeof(char), BUFFER_SIZE, shm_f);       
+        fclose(shm_f);
 
-// Section de convertion pour Curl H
-std::vector<std::vector<std::vector<std::vector<double>>>> 
-curl_H(std::vector<std::vector<std::vector<std::vector<double>>>> H) {
-    std::vector<std::vector<std::vector<std::vector<double>>>> curl_H(H.size(), std::vector<std::vector<std::vector<double>>>(H[0].size(), std::vector<std::vector<double>>(H[0][0].size(), std::vector<double>(H[0][0][0].size(), 0.0))));
-
-    for (int i = 0; i < H.size(); i++) {
-        for (int j = 1; j < H[0][0].size(); j++) {
-            for (int k = 0; k < H[0][0][0].size(); k++) {
-                curl_H[i][j][0][k] += H[i][j][k][2] - H[i][j-1][k][2];
-                curl_H[i][j][k][0] -= H[i][j][k][1] - H[i][j][k-1][1];
-            }
-        }
-    }
-
-    for (int i = 0; i < H.size(); i++) {
-        for (int j = 1; j < H[0].size(); j++) {
-            for (int k = 0; k < H[0][0][0].size(); k++) {
-                curl_H[i][j][k][1] += H[i][j][k][0] - H[i][j-1][k][0];
-                curl_H[i][0][k][1] -= H[i][0][k][2] - H[i][j][k][2];
-            }
-        }
-    }
-
-    for (int i = 1; i < H.size(); i++) {
-        for (int j = 0; j < H[0][0].size(); j++) {
-            for (int k = 0; k < H[0][0][0].size(); k++) {
-                curl_H[i][j][k][2] += H[i][j][k][1] - H[i-1][j][k][1];
-                curl_H[0][j][k][2] -= H[0][j][k][1] - H[i][j][k][1];
-            }
-        }
-    }
-
-    for (int i = 1; i < H.size(); i++) {
-        for (int j = 0; j < H[0].size(); j++) {
-            for (int k = 0; k < H[0][0][0].size(); k++) {
-                curl_H[i][j][k][0] -= H[i][j][k][2] - H[i-1][j][k][2];
-                curl_H[i][j][k][1] += H[i][j][k][0] - H[i][j][k-1][0];
-            }
-        }
-    }
-
-    return curl_H;
-}
-
-std::vector<std::vector<std::vector<std::vector<double>>>> curl_E(std::vector<std::vector<std::vector<std::vector<double>>>> E);
-std::vector<std::vector<std::vector<std::vector<double>>>> curl_H(std::vector<std::vector<std::vector<std::vector<double>>>> H);
-
-std::vector<std::vector<std::vector<std::vector<double>>>> timestep(std::vector<std::vector<std::vector<std::vector<double>>>>& E,
-         std::vector<std::vector<std::vector<std::vector<double>>>>& H, 
-         double courant_number, std::vector<int> source_pos, std::vector<double> source_val) {
-    
-    // Calculate the curl of H and update E
-    std::vector<std::vector<std::vector<std::vector<double>>>> curl_H_vec = curl_H(H);
-    for (int i = 0; i < E.size(); i++) {
-        for (int j = 0; j < E[0].size(); j++) {
-            for (int k = 0; k < E[0][0].size(); k++) {
-                for (int l = 0; l < 3; l++) {
-                    E[i][j][k][l] += courant_number * curl_H_vec[i][j][k][l];
+        // On signale que le fichier est prêt.
+        std::cerr << "CPP:  Check moi le bo fichier touer" << std::endl;
+        ack_signal();
+        
+        // Pointeur format double qui représente la matrice partagée:
+        int shm_fd = open("GIF642-problematique-sharedMemory", O_RDWR);
+        void* shm_mmap = mmap(NULL, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);
+        close(shm_fd);
+        double* mtx = (double*)shm_mmap;
+        fourD mtxPlusMC(MATRIX_SIZE,std::vector<std::vector<e_vector>>(MATRIX_SIZE,std::vector<e_vector>(MATRIX_SIZE)));
+        
+        while(true) {
+            wait_signal();
+            
+            for (int i = 0; i < MATRIX_SIZE; i++) {
+                for (int j = 0; j < MATRIX_SIZE; j++) {
+                    for (int k = 0; k < MATRIX_SIZE; k++) {
+                        mtxPlusMC[i][j][k].x_value = mtx[i*MATRIX_SIZE*MATRIX_SIZE*3 + j*MATRIX_SIZE*3 + k*3+0];
+                        mtxPlusMC[i][j][k].y_value = mtx[i*MATRIX_SIZE*MATRIX_SIZE*3 + j*MATRIX_SIZE*3 + k*3+1];
+                        mtxPlusMC[i][j][k].z_value = mtx[i*MATRIX_SIZE*MATRIX_SIZE*3 + j*MATRIX_SIZE*3 + k*3+2];
+                    }
                 }
             }
-        }
-    }
-    
-    // Add the source term to E
-    E[source_pos[0]][source_pos[1]][source_pos[2]][source_pos[3]] += source_val[0];
-    
-    // Calculate the curl of E and update H
-    std::vector<std::vector<std::vector<std::vector<double>>>> curl_E_vec = curl_E(E);
-    for (int i = 0; i < H.size(); i++) {
-        for (int j = 0; j < H[0].size(); j++) {
-            for (int k = 0; k < H[0][0].size(); k++) {
-                for (int l = 0; l < 3; l++) {
-                    H[i][j][k][l] -= courant_number * curl_E_vec[i][j][k][l];
+            mtxPlusMC = math_conc(mtxPlusMC);
+        
+            for (int i = 0; i < MATRIX_SIZE; i++) {
+                for (int j = 0; j < MATRIX_SIZE; j++) {
+                    for (int k = 0; k < MATRIX_SIZE; k++) {
+                        mtx[i*MATRIX_SIZE*MATRIX_SIZE*3 + j*MATRIX_SIZE*3 + k*3+0]=mtxPlusMC[i][j][k].x_value;
+                        mtx[i*MATRIX_SIZE*MATRIX_SIZE*3 + j*MATRIX_SIZE*3 + k*3+1]=mtxPlusMC[i][j][k].y_value;
+                        mtx[i*MATRIX_SIZE*MATRIX_SIZE*3 + j*MATRIX_SIZE*3 + k*3+2]=mtxPlusMC[i][j][k].z_value;
+                    }
                 }
             }
+            std::cerr << "CPP:  Un tour de roue dans la machine a math" << std::endl;
+            ack_signal();
         }
+    munmap(shm_mmap, BUFFER_SIZE);
+    return 0;
     }
-    
-    return {E, H};
-}
