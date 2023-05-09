@@ -8,7 +8,10 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <mutex>
+#include <condition_variable>
 #include <unordered_map>
+#include <atomic>
 #include <string>
 #include <cstring>
 #include <thread>
@@ -17,10 +20,15 @@ namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-const int       NUM_THREADS = 1;    // Default value, changed by argv. 
+int             NUM_THREADS = 1;    // Default value, changed by argv.
 
 using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
+
+std::mutex mut;
+std::mutex mut2;
+std::condition_variable data_cond;
+
 
 /// \brief Wraps callbacks from stbi_image_write
 //
@@ -36,6 +44,31 @@ using PNGDataPtr = std::shared_ptr<PNGDataVec>;
 //                                          // return when it's done.
 //                                          // Throws if an error occured.
 //
+std::vector<std::string> readCSVRow(const std::string &row) {
+    std::vector<std::string> fields {""};
+    size_t i = 0; // index of the current field
+    for (char c : row) {   
+        switch (c) {
+            case ',': // end of field
+                        fields.push_back(""); i++;
+                        break;
+            default:  fields[i].push_back(c);
+                        break; }
+        break;
+    }
+    return fields;
+}
+
+std::vector<std::string> readCSV(std::istream &in) {
+    std::string row;
+    std::vector<std::string> fields;
+    while (!in.eof()) {
+        std::getline(in, row);
+        fields = readCSVRow(row);
+    }
+    return fields;
+}
+
 class PNGWriter
 {
 private:
@@ -97,12 +130,29 @@ public:
 ///
 /// NOTE: Assumes the input SVG is ORG_WIDTH wide (48px) and the result will be
 /// square. Does not matter if it does not fit in the resulting image, it will //// simply be cropped.
+
+
+/* struct TaskDef
+{
+    std::atomic<std::string> fname_in;
+    std::atomic<std::string> fname_out; 
+    std::atomic<int> size;
+};
+  */
+
+
 struct TaskDef
 {
     std::string fname_in;
     std::string fname_out; 
     int size;
-};
+
+    std::string getHash()
+    {
+        return fname_in + std::to_string(size);
+    }
+}; 
+
 
 /// \brief A class representing the processing of one SVG file to a PNG stream.
 ///
@@ -112,11 +162,12 @@ class TaskRunner
 {
 private:
     TaskDef task_def_;
-
+    PNGDataPtr png_data_;
 public:
     TaskRunner(const TaskDef& task_def):
         task_def_(task_def)
     {
+        task_def_= task_def;
     }
 
     void operator()()
@@ -139,6 +190,7 @@ public:
 
         try {
             // Read the file ...
+            std::lock_guard<std::mutex> lock(mut2);
             image_in = nsvgParseFromFile(fname_in.c_str(), "px", 0);
             if (image_in == nullptr) {
                 std::string msg = "Cannot parse '" + fname_in + "'.";
@@ -161,7 +213,7 @@ public:
             // Compress it ...
             PNGWriter writer;
             writer(width, height, BPP, &image_data[0], stride);
-
+            png_data_ = writer.getData();
             // Write it out ...
             std::ofstream file_out(fname_out, std::ofstream::binary);
             auto data = writer.getData();
@@ -184,6 +236,10 @@ public:
                   << fname_in 
                   << "." 
                   << std::endl;
+    }
+    PNGDataPtr getData()
+    {
+        return png_data_;
     }
 };
 
@@ -246,9 +302,13 @@ public:
     ~Processor()
     {
         should_run_ = false;
+        int i =0;
         for (auto& qthread: queue_threads_) {
+            data_cond.notify_one();
             qthread.join();
+            std::cerr << "Thread " << i++ << " joined." << std::endl;
         }
+        
     }
 
     /// \brief Parse a task definition string and fills the references TaskDef
@@ -309,9 +369,11 @@ public:
     {
         std::queue<TaskDef> queue;
         TaskDef def;
+        std::lock_guard<std::mutex> lock(mut);
         if (parse(line_org, def)) {
             std::cerr << "Queueing task '" << line_org << "'." << std::endl;
             task_queue_.push(def);
+            data_cond.notify_one();
         }
     }
 
@@ -326,11 +388,37 @@ private:
     void processQueue()
     {
         while (should_run_) {
-            if (!task_queue_.empty()) {
-                TaskDef task_def = task_queue_.front();
-                task_queue_.pop();
+            std::unique_lock<std::mutex> lock(mut);
+            data_cond.wait(lock, [this]{return !task_queue_.empty() || !should_run_;});
+            
+            
+            if (!should_run_) {
+                return;
+            }
+            TaskDef task_def = task_queue_.front();
+
+            
+            task_queue_.pop();
+            lock.unlock();
+            
+            
+            auto hashKey = task_def.getHash();
+            auto dataIterator = png_cache_.find(hashKey);
+
+            if (dataIterator != png_cache_.end()) {
+                std::cerr << "Cache hit " <<std::endl;
+                auto png_data = png_cache_[hashKey];
+                 for(int i = task_def.fname_out.size()-6; i <= task_def.fname_out.size();i++){
+                    task_def.fname_out.pop_back();
+                }
+                std::ofstream file_out(task_def.fname_out+"(copy).png", std::ofstream::binary);
+                file_out.write(&(png_data->front()), png_data->size());
+            }
+            else{
                 TaskRunner runner(task_def);
                 runner();
+                png_cache_[hashKey] = runner.getData();
+                std::cerr << runner.getData() << std::endl;
             }
         }
     }
@@ -341,37 +429,78 @@ private:
 int main(int argc, char** argv)
 {
     using namespace gif643;
-
-    std::ifstream file_in;
-
-    if (argc >= 2 && (strcmp(argv[1], "-") != 0)) {
-        file_in.open(argv[1]);
-        if (file_in.is_open()) {
-            std::cin.rdbuf(file_in.rdbuf());
-            std::cerr << "Using " << argv[1] << "..." << std::endl;
-        } else {
-            std::cerr   << "Error: Cannot open '"
-                        << argv[1] 
-                        << "', using stdin (press CTRL-D for EOF)." 
-                        << std::endl;
+    bool cache = true;
+    bool csv = false;
+    std::ifstream file_in; 
+    std::vector<std::string> csvLine;
+    if (argc >= 2 ) {
+        for (size_t i = 1; i < argc; i++){ 
+            if (!strcmp(argv[i], "-f"))
+            { 
+                file_in.open(argv[i+1]);
+                if (file_in.is_open()) {
+                    std::cin.rdbuf(file_in.rdbuf());
+                    csvLine = readCSV(file_in);
+                    std::cerr << "Using " << argv[i+1] << "..." << std::endl;
+                    
+                } else {
+                    std::cerr   << "Error: Cannot open '"
+                                << argv[i+1] 
+                                << "', using stdin (press CTRL-D for EOF)." 
+                                << std::endl;
+                };
+            }
+            if (!strcmp(argv[i], "-t"))
+            {
+                NUM_THREADS = atoi(argv[i+1]);
+                std::cerr << "Using " << NUM_THREADS << " threads..." << std::endl;
+            }
+            if (!strcmp(argv[i], "-c"))
+            {
+                cache = false;
+                std::cerr << "Not using cache..." << std::endl;
+            }
         }
+        
+        
     } else {
         std::cerr << "Using stdin (press CTRL-D for EOF)." << std::endl;
     }
 
     // TODO: change the number of threads from args.
     Processor proc;
-    
-    while (!std::cin.eof()) {
 
-        std::string line, line_org;
+    std::vector<std::string> doublons;
+    if(csv){
+            for(int i =0 ; i <= csvLine.size(); i++){
+                doublons.push_back(csvLine[i]);
+                proc.parseAndQueue(csvLine[i]);
+            }
+           
+    }else{
+        while (!std::cin.eof()) {
 
-        std::getline(std::cin, line);
-        if (!line.empty()) {
-            proc.parseAndQueue(line);
+            std::string line, line_org;
+
+            std::getline(std::cin, line);
+            if (!line.empty()) {
+                doublons.push_back(line);
+                proc.parseAndQueue(line);
+            }
         }
     }
 
+    std::cerr << "doublons size" << doublons.size() << std::endl;
+    if(cache){
+        for (size_t i = 0; i < doublons.size(); i++)
+        {
+            std::cerr << "double" << doublons[i] << std::endl;
+            proc.parseAndQueue(doublons[i]);
+        }
+        
+    } 
+    
+    
     if (file_in.is_open()) {
         file_in.close();
     }

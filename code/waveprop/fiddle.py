@@ -1,10 +1,12 @@
 
 #  Copyright (C) 2009,2011,2020. Max Hofheinz
-
 import tkinter
-
+from subprocess import Popen, PIPE
+import mmap
+import time
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+import numpy as np
 
 class Param(tkinter.Frame):
     def __init__(self, parent, callback, param_index, param_name):
