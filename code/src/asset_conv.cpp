@@ -121,6 +121,11 @@ struct TaskDef
     std::string fname_in;
     std::string fname_out; 
     int size;
+
+    std::string getHash()
+    {
+        return fname_in + std::to_string(size);
+    }
 }; 
 
 
@@ -132,7 +137,7 @@ class TaskRunner
 {
 private:
     TaskDef task_def_;
-
+    PNGDataPtr png_data_;
 public:
     TaskRunner(const TaskDef& task_def):
         task_def_(task_def)
@@ -183,7 +188,7 @@ public:
             // Compress it ...
             PNGWriter writer;
             writer(width, height, BPP, &image_data[0], stride);
-
+            png_data_ = writer.getData();
             // Write it out ...
             std::ofstream file_out(fname_out, std::ofstream::binary);
             auto data = writer.getData();
@@ -206,6 +211,10 @@ public:
                   << fname_in 
                   << "." 
                   << std::endl;
+    }
+    PNGDataPtr getData()
+    {
+        return png_data_;
     }
 };
 
@@ -356,14 +365,32 @@ private:
         while (should_run_) {
             std::unique_lock<std::mutex> lock(mut);
             data_cond.wait(lock, [this]{return !task_queue_.empty() || !should_run_;});
+            
+            
             if (!should_run_) {
                 return;
             }
             TaskDef task_def = task_queue_.front();
+
+            
             task_queue_.pop();
             lock.unlock();
-            TaskRunner runner(task_def);
-            runner();
+            
+            
+            auto hashKey = task_def.getHash();
+            auto dataIterator = png_cache_.find(hashKey);
+
+            if (dataIterator != png_cache_.end()) {
+                std::cerr << "Cache hit " <<std::endl;
+                auto png_data = png_cache_[hashKey];
+                std::ofstream file_out(task_def.fname_out+"copy", std::ofstream::binary);
+            }
+            else{
+                TaskRunner runner(task_def);
+                runner();
+                png_cache_[hashKey] = runner.getData();
+                std::cerr << png_cache_.size() << std::endl;
+            }
         }
     }
 };
@@ -373,7 +400,7 @@ private:
 int main(int argc, char** argv)
 {
     using namespace gif643;
-
+    bool cache = false;
     std::ifstream file_in; 
     
     if (argc >= 2 ) {
@@ -396,6 +423,11 @@ int main(int argc, char** argv)
                 NUM_THREADS = atoi(argv[i+1]);
                 std::cerr << "Using " << NUM_THREADS << " threads..." << std::endl;
             }
+            if (!strcmp(argv[i], "-c"))
+            {
+                cache = true;
+                std::cerr << "Using cache..." << std::endl;
+            }
         }
         
         
@@ -405,17 +437,28 @@ int main(int argc, char** argv)
 
     // TODO: change the number of threads from args.
     Processor proc;
-    
+    std::vector<std::string> doublons;
     while (!std::cin.eof()) {
 
         std::string line, line_org;
 
         std::getline(std::cin, line);
         if (!line.empty()) {
+            doublons.push_back(line);
             proc.parseAndQueue(line);
         }
     }
-
+    std::cerr << "doublons size" << doublons.size() << std::endl;
+    if(cache){
+        for (size_t i = 0; i < doublons.size(); i++)
+        {
+            std::cerr << "double" << doublons[i] << std::endl;
+            proc.parseAndQueue(doublons[i]);
+        }
+        
+    } 
+    
+    
     if (file_in.is_open()) {
         file_in.close();
     }
@@ -423,3 +466,36 @@ int main(int argc, char** argv)
     // Wait until the processor queue's has tasks to do.
     while (!proc.queueEmpty()) {};
 }
+/*
+                    auto hashKey = task_def.get_hash_key();
+                    auto dataIterator = png_cache_.find(hashKey);
+                    if (dataIterator == png_cache_.end() || !std::get<PNGDataPtr>(*dataIterator))
+                    {
+                        png_cache_.emplace(hashKey, PNGDataPtr{});
+                        hashMutex.unlock();
+                        
+                        TaskRunner runner(task_def);
+                        runner();
+                           
+                        PNGDataPtr pngData = runner.getData();
+                        hashMutex.lock();
+                        std::cout << "inserting " << task_def.fname_out << std::endl;
+                        png_cache_[hashKey] = pngData;
+                        hashMutex.unlock();
+                    }
+                    else
+                    {
+                        std::cout << "No need to compute" << std::endl;
+
+                        std::cout << "getting for " << task_def.fname_out << std::endl;
+                        PNGDataPtr pngData = std::get<PNGDataPtr>(*dataIterator);
+                        
+                        // Write it out ...
+                        std::ofstream file_out(task_def.fname_out, std::ofstream::binary);
+                        
+                        std::cout << "got" << std::endl;
+                        hashMutex.unlock();
+                        file_out.write(&(pngData->front()), pngData->size());
+                        std::cout << "file written" << std::endl;
+                    }
+*/
