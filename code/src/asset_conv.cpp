@@ -14,7 +14,10 @@
 #include <atomic>
 #include <string>
 #include <cstring>
+
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace gif643 {
 
@@ -22,11 +25,11 @@ const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
 int             NUM_THREADS = 1;    // Default value, changed by argv.
 
+
 using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
 
 std::mutex mut;
-std::mutex mut2;
 std::condition_variable data_cond;
 
 
@@ -91,6 +94,7 @@ public:
     /// \param len  size of the data array.
     void callback(void* data, size_t len)
     {
+    
         char* data_raw = static_cast<char *>(data);
         png_data_ = PNGDataPtr(new PNGDataVec(&data_raw[0], &data_raw[len]));
     }
@@ -157,12 +161,13 @@ struct TaskDef
 /// \brief A class representing the processing of one SVG file to a PNG stream.
 ///
 /// Not thread safe !
-///
+///#andre est ce qu,on fait juste mettre un mutex pour etre safe?
 class TaskRunner
 {
 private:
     TaskDef task_def_;
     PNGDataPtr png_data_;
+    std::mutex          mutexTR_;
 public:
     TaskRunner(const TaskDef& task_def):
         task_def_(task_def)
@@ -180,17 +185,15 @@ public:
         const size_t        image_size  = height * stride;
         const float&        scale       = float(width) / ORG_WIDTH;
 
-        std::cerr << "Running for "
-                  << fname_in 
-                  << "..." 
-                  << std::endl;
+        std::string msg = "Running for " + fname_in + "...";
+        throw std::runtime_error(msg.c_str());
 
         NSVGimage*          image_in        = nullptr;
         NSVGrasterizer*     rast            = nullptr;
-
+        
         try {
+            std::lock_guard<std::mutex> lock(mutexTR_);
             // Read the file ...
-            std::lock_guard<std::mutex> lock(mut2);
             image_in = nsvgParseFromFile(fname_in.c_str(), "px", 0);
             if (image_in == nullptr) {
                 std::string msg = "Cannot parse '" + fname_in + "'.";
@@ -209,6 +212,10 @@ public:
                           width,
                           height,
                           stride); 
+    // The cache hash map (TODO). Note that we use the string definition as the // key.
+    using PNGHashMap = std::unordered_map<std::string, PNGDataPtr>;
+    PNGHashMap png_cache_;
+
 
             // Compress it ...
             PNGWriter writer;
@@ -220,22 +227,16 @@ public:
             file_out.write(&(data->front()), data->size());
             
         } catch (std::runtime_error e) {
-            std::cerr << "Exception while processing "
-                      << fname_in
-                      << ": "
-                      << e.what()
-                      << std::endl;
+            std::string msg = "Exception while processing " + fname_in + ": " + e.what();
+            throw std::runtime_error(msg.c_str());
         }
         
         // Bring down ...
         nsvgDelete(image_in);
         nsvgDeleteRasterizer(rast);
+        std::string msg = "Done for " + fname_in + ".";
+        throw std::runtime_error(msg.c_str());
 
-        std::cerr << std::endl 
-                  << "Done for "
-                  << fname_in 
-                  << "." 
-                  << std::endl;
     }
     PNGDataPtr getData()
     {
@@ -264,6 +265,7 @@ private:
     // The tasks to run queue (FIFO).
     std::queue<TaskDef> task_queue_;
 
+
     // The cache hash map (TODO). Note that we use the string definition as the // key.
     using PNGHashMap = std::unordered_map<std::string, PNGDataPtr>;
     PNGHashMap png_cache_;
@@ -284,15 +286,15 @@ public:
         should_run_(true)
     {
         if (n_threads <= 0) {
-            std::cerr << "Warning, incorrect number of threads ("
-                      << n_threads
-                      << "), setting to "
-                      << NUM_THREADS
-                      << std::endl;
+            std::string s = std::to_string(n_threads);
+            std::string u = std::to_string(NUM_THREADS);
+            std::string msg = "Warning, incorrect number of threads (" + s + "), setting to " + u;
+            throw std::runtime_error(msg.c_str()); 
             n_threads = NUM_THREADS;
         }
 
         for (int i = 0; i < n_threads; ++i) {
+            //std::cerr << "Nombre de thread" << n_threads;
             queue_threads_.push_back(
                 std::thread(&Processor::processQueue, this)
             );
@@ -326,10 +328,8 @@ public:
             tokens.push_back(line);
 
             if (tokens.size() < 3) {
-                std::cerr << "Error: Wrong line format: "
-                        << line_org
-                        << " (size: " << line_org.size() << ")."
-                        << std::endl;
+                std::string msg = "Error: Wrong line format: " + line_org + " (size: " + line_org.size() + ").";
+                throw std::runtime_error(msg.c_str());
                 return false;
             }
 
@@ -371,10 +371,13 @@ public:
         TaskDef def;
         std::lock_guard<std::mutex> lock(mut);
         if (parse(line_org, def)) {
-            std::cerr << "Queueing task '" << line_org << "'." << std::endl;
+            std::string msg = "Queueing task '" + line_org + " '.'";
+            throw std::runtime_error(msg.c_str());
+            std::lock_guard<std::mutex> lock(mutex_);
             task_queue_.push(def);
             data_cond.notify_one();
         }
+
     }
 
     /// \brief Returns if the internal queue is empty (true) or not.
@@ -425,7 +428,6 @@ private:
 };
 
 }
-
 int main(int argc, char** argv)
 {
     using namespace gif643;

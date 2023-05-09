@@ -27,5 +27,6 @@ target_link_libraries(lab_ex3 pthread)
 add_executable(lab_ex4 src/lab_ex4.cpp)
 target_link_libraries(lab_ex4 pthread)
 
-add_executable(PythPyth src/PythPyth.cpp)
-target_link_libraries(PythPyth pthread)
+#Ajout pour problematique
+add_executable(JasonSegel src/JasonSegel.cpp)
+target_link_libraries(JasonSegel pthread)
