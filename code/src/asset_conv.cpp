@@ -361,27 +361,35 @@ private:
 };
 
 }
-
 int main(int argc, char** argv)
 {
     using namespace gif643;
 
-    std::ifstream file_in;
-    char *p;
-    int num;
-    errno = 0;
-    NUM_THREADS = strtol(argv[1], &p, 10);
-    if (argc >= 2 && (strcmp(argv[2], "-") != 0)) {
-        file_in.open(argv[2]);
-        if (file_in.is_open()) {
-            std::cin.rdbuf(file_in.rdbuf());
-            std::cerr << "Using " << argv[2] << "..." << std::endl;
-        } else {
-            std::cerr   << "Error: Cannot open '"
-                        << argv[2] 
-                        << "', using stdin (press CTRL-D for EOF)." 
-                        << std::endl;
+    std::ifstream file_in; 
+    
+    if (argc >= 2 ) {
+        for (size_t i = 1; i < argc; i++){ 
+            if (!strcmp(argv[i], "-f"))
+            { 
+                file_in.open(argv[i+1]);
+                if (file_in.is_open()) {
+                    std::cin.rdbuf(file_in.rdbuf());
+                    std::cerr << "Using " << argv[i+1] << "..." << std::endl;
+                } else {
+                    std::cerr   << "Error: Cannot open '"
+                                << argv[i+1] 
+                                << "', using stdin (press CTRL-D for EOF)." 
+                                << std::endl;
+                };
+            }
+            if (!strcmp(argv[i], "-t"))
+            {
+                NUM_THREADS = atoi(argv[i+1]);
+                std::cerr << "Using " << NUM_THREADS << " threads..." << std::endl;
+            }
         }
+        
+        
     } else {
         std::cerr << "Using stdin (press CTRL-D for EOF)." << std::endl;
     }
