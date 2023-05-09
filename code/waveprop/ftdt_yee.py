@@ -88,16 +88,6 @@ class WaveEquation:
             self.image.set_data(field)
         self.index += 1
     
-def subp():
-    subproc = Popen(["./PythPyth", FNAME], stdin=PIPE, stdout=PIPE)
-    return subproc
-
-
-def signal_and_wait(subproc):
-    subproc.stdin.write("START\n".encode())
-    subproc.stdin.flush()
-    # Nécessaire pour vider le tampon de sortie
-    res = subproc.stdout.readline()
     
 
 if __name__ == "__main__":
