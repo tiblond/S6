@@ -137,10 +137,8 @@ public:
         const size_t        image_size  = height * stride;
         const float&        scale       = float(width) / ORG_WIDTH;
 
-        std::cerr << "Running for "
-                  << fname_in 
-                  << "..." 
-                  << std::endl;
+        std::string msg = "Running for " + fname_in + "...";
+        throw std::runtime_error(msg.c_str());
 
         NSVGimage*          image_in        = nullptr;
         NSVGrasterizer*     rast            = nullptr;
@@ -181,22 +179,16 @@ public:
             file_out.write(&(data->front()), data->size());
             
         } catch (std::runtime_error e) {
-            std::cerr << "Exception while processing "
-                      << fname_in
-                      << ": "
-                      << e.what()
-                      << std::endl;
+            std::string msg = "Exception while processing " + fname_in + ": " + e.what();
+            throw std::runtime_error(msg.c_str());
         }
         
         // Bring down ...
         nsvgDelete(image_in);
         nsvgDeleteRasterizer(rast);
+        std::string msg = "Done for " + fname_in + ".";
+        throw std::runtime_error(msg.c_str());
 
-        std::cerr << std::endl 
-                  << "Done for "
-                  << fname_in 
-                  << "." 
-                  << std::endl;
     }
 };
 
@@ -242,11 +234,10 @@ public:
         should_run_(true)
     {
         if (n_threads <= 0) {
-            std::cerr << "Warning, incorrect number of threads ("
-                      << n_threads
-                      << "), setting to "
-                      << NUM_THREADS
-                      << std::endl;
+            std::string s = std::to_string(n_threads);
+            std::string u = std::to_string(NUM_THREADS);
+            std::string msg = "Warning, incorrect number of threads (" + s + "), setting to " + u;
+            throw std::runtime_error(msg.c_str()); 
             n_threads = NUM_THREADS;
         }
 
@@ -283,10 +274,8 @@ public:
             tokens.push_back(line);
 
             if (tokens.size() < 3) {
-                std::cerr << "Error: Wrong line format: "
-                        << line_org
-                        << " (size: " << line_org.size() << ")."
-                        << std::endl;
+                std::string msg = "Error: Wrong line format: " + line_org + " (size: " + line_org.size() + ").";
+                throw std::runtime_error(msg.c_str());
                 return false;
             }
 
@@ -327,7 +316,8 @@ public:
         std::queue<TaskDef> queue;
         TaskDef def;
         if (parse(line_org, def)) {
-            std::cerr << "Queueing task '" << line_org << "'." << std::endl;
+            std::string msg = "Queueing task '" + line_org + " '.'";
+            throw std::runtime_error(msg.c_str());
             std::lock_guard<std::mutex> lock(mutex_);
             task_queue_.push(def);
             data_cond.notify_one();
