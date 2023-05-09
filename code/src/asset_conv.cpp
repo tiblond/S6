@@ -20,7 +20,7 @@ namespace gif643 {
 
 const size_t    BPP         = 4;    // Bytes per pixel
 const float     ORG_WIDTH   = 48.0; // Original SVG image width in px.
-int             NUM_THREADS = 48;    // Default value, changed by argv. 
+int             NUM_THREADS = 1;    // Default value, changed by argv.
 
 using PNGDataVec = std::vector<char>;
 using PNGDataPtr = std::shared_ptr<PNGDataVec>;
@@ -44,6 +44,31 @@ std::condition_variable data_cond;
 //                                          // return when it's done.
 //                                          // Throws if an error occured.
 //
+std::vector<std::string> readCSVRow(const std::string &row) {
+    std::vector<std::string> fields {""};
+    size_t i = 0; // index of the current field
+    for (char c : row) {   
+        switch (c) {
+            case ',': // end of field
+                        fields.push_back(""); i++;
+                        break;
+            default:  fields[i].push_back(c);
+                        break; }
+        break;
+    }
+    return fields;
+}
+
+std::vector<std::string> readCSV(std::istream &in) {
+    std::string row;
+    std::vector<std::string> fields;
+    while (!in.eof()) {
+        std::getline(in, row);
+        fields = readCSVRow(row);
+    }
+    return fields;
+}
+
 class PNGWriter
 {
 private:
@@ -279,7 +304,7 @@ public:
         should_run_ = false;
         int i =0;
         for (auto& qthread: queue_threads_) {
-            data_cond.notify_all();
+            data_cond.notify_one();
             qthread.join();
             std::cerr << "Thread " << i++ << " joined." << std::endl;
         }
@@ -383,13 +408,17 @@ private:
             if (dataIterator != png_cache_.end()) {
                 std::cerr << "Cache hit " <<std::endl;
                 auto png_data = png_cache_[hashKey];
-                std::ofstream file_out(task_def.fname_out+"copy", std::ofstream::binary);
+                 for(int i = task_def.fname_out.size()-6; i <= task_def.fname_out.size();i++){
+                    task_def.fname_out.pop_back();
+                }
+                std::ofstream file_out(task_def.fname_out+"(copy).png", std::ofstream::binary);
+                file_out.write(&(png_data->front()), png_data->size());
             }
             else{
                 TaskRunner runner(task_def);
                 runner();
                 png_cache_[hashKey] = runner.getData();
-                std::cerr << png_cache_.size() << std::endl;
+                std::cerr << runner.getData() << std::endl;
             }
         }
     }
@@ -400,9 +429,10 @@ private:
 int main(int argc, char** argv)
 {
     using namespace gif643;
-    bool cache = false;
+    bool cache = true;
+    bool csv = false;
     std::ifstream file_in; 
-    
+    std::vector<std::string> csvLine;
     if (argc >= 2 ) {
         for (size_t i = 1; i < argc; i++){ 
             if (!strcmp(argv[i], "-f"))
@@ -410,7 +440,9 @@ int main(int argc, char** argv)
                 file_in.open(argv[i+1]);
                 if (file_in.is_open()) {
                     std::cin.rdbuf(file_in.rdbuf());
+                    csvLine = readCSV(file_in);
                     std::cerr << "Using " << argv[i+1] << "..." << std::endl;
+                    
                 } else {
                     std::cerr   << "Error: Cannot open '"
                                 << argv[i+1] 
@@ -425,8 +457,8 @@ int main(int argc, char** argv)
             }
             if (!strcmp(argv[i], "-c"))
             {
-                cache = true;
-                std::cerr << "Using cache..." << std::endl;
+                cache = false;
+                std::cerr << "Not using cache..." << std::endl;
             }
         }
         
@@ -437,17 +469,27 @@ int main(int argc, char** argv)
 
     // TODO: change the number of threads from args.
     Processor proc;
+
     std::vector<std::string> doublons;
-    while (!std::cin.eof()) {
+    if(csv){
+            for(int i =0 ; i <= csvLine.size(); i++){
+                doublons.push_back(csvLine[i]);
+                proc.parseAndQueue(csvLine[i]);
+            }
+           
+    }else{
+        while (!std::cin.eof()) {
 
-        std::string line, line_org;
+            std::string line, line_org;
 
-        std::getline(std::cin, line);
-        if (!line.empty()) {
-            doublons.push_back(line);
-            proc.parseAndQueue(line);
+            std::getline(std::cin, line);
+            if (!line.empty()) {
+                doublons.push_back(line);
+                proc.parseAndQueue(line);
+            }
         }
     }
+
     std::cerr << "doublons size" << doublons.size() << std::endl;
     if(cache){
         for (size_t i = 0; i < doublons.size(); i++)
@@ -466,36 +508,3 @@ int main(int argc, char** argv)
     // Wait until the processor queue's has tasks to do.
     while (!proc.queueEmpty()) {};
 }
-/*
-                    auto hashKey = task_def.get_hash_key();
-                    auto dataIterator = png_cache_.find(hashKey);
-                    if (dataIterator == png_cache_.end() || !std::get<PNGDataPtr>(*dataIterator))
-                    {
-                        png_cache_.emplace(hashKey, PNGDataPtr{});
-                        hashMutex.unlock();
-                        
-                        TaskRunner runner(task_def);
-                        runner();
-                           
-                        PNGDataPtr pngData = runner.getData();
-                        hashMutex.lock();
-                        std::cout << "inserting " << task_def.fname_out << std::endl;
-                        png_cache_[hashKey] = pngData;
-                        hashMutex.unlock();
-                    }
-                    else
-                    {
-                        std::cout << "No need to compute" << std::endl;
-
-                        std::cout << "getting for " << task_def.fname_out << std::endl;
-                        PNGDataPtr pngData = std::get<PNGDataPtr>(*dataIterator);
-                        
-                        // Write it out ...
-                        std::ofstream file_out(task_def.fname_out, std::ofstream::binary);
-                        
-                        std::cout << "got" << std::endl;
-                        hashMutex.unlock();
-                        file_out.write(&(pngData->front()), pngData->size());
-                        std::cout << "file written" << std::endl;
-                    }
-*/
